@@ -1,0 +1,29 @@
+# Entorno virtual
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pruebas y cobertura
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Variables de entorno reales (los ejemplos sí se versionan)
+.env
+.env.*
+!.env.example
+
+# Miscelánea
+*.log
+.DS_Store
+
+# Documentación: no se versiona en este repositorio (petición de la profesora).
+# Toda vive en la carpeta independiente Nexora-Documentation (ADR-0002 v0.2).
+docs/
+documentation/
