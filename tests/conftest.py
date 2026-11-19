@@ -1,9 +1,10 @@
 """Fixtures comunes de las pruebas del backend."""
 
+import uuid
 from collections.abc import Generator
 
 import pytest
-from sqlalchemy import Engine
+from sqlalchemy import Engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import settings
@@ -58,3 +59,40 @@ def test_session(
 def bdd_context() -> dict[str, object]:
     """Contexto compartido entre los pasos Gherkin."""
     return {}
+
+
+@pytest.fixture(scope="session")
+def model_schema(test_engine: Engine) -> Generator[Engine, None, None]:
+    """Crea las tablas de los modelos en un esquema temporal de nexora_test.
+
+    Así las pruebas de modelos no dependen de las migraciones ni dejan
+    tablas en el esquema public. El esquema se borra siempre al terminar.
+    """
+    from app.db.base import Base
+    import app.models  # noqa: F401  (registra las tablas en Base.metadata)
+
+    schema = f"test_models_{uuid.uuid4().hex[:8]}"
+    engine = test_engine.execution_options(schema_translate_map={None: schema})
+    with test_engine.begin() as connection:
+        connection.execute(text(f'CREATE SCHEMA "{schema}"'))
+    try:
+        with engine.begin() as connection:
+            Base.metadata.create_all(connection)
+        yield engine
+    finally:
+        with test_engine.begin() as connection:
+            connection.execute(text(f'DROP SCHEMA "{schema}" CASCADE'))
+
+
+@pytest.fixture()
+def model_session(model_schema: Engine) -> Generator[Session, None, None]:
+    """Sesión sobre el esquema temporal; todo se deshace al terminar."""
+    connection = model_schema.connect()
+    transaction = connection.begin()
+    session = Session(bind=connection, join_transaction_mode="create_savepoint")
+    try:
+        yield session
+    finally:
+        session.close()
+        transaction.rollback()
+        connection.close()
