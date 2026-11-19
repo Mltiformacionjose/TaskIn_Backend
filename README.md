@@ -1,8 +1,10 @@
-# Nexora — Backend
+# TaskIn — Backend
 
-Nexora es una aplicación web de gestión de tareas y listas personales y compartidas. Este repositorio contiene el **backend**: la API, la lógica de negocio y el acceso a datos. El frontend vive en otro repositorio y se comunica con este por HTTP; **nunca accede directamente a PostgreSQL**.
+TaskIn es una aplicación web de gestión de tareas y listas personales y compartidas. Este repositorio contiene el **backend**: la API, la lógica de negocio y el acceso a datos. El frontend vive en otro repositorio y se comunica con este por HTTP; **nunca accede directamente a PostgreSQL**.
 
-> **Estado real (2026-11-17):** solo hay infraestructura. Existen la aplicación FastAPI vacía, la configuración, la conexión a PostgreSQL, Alembic sin migraciones y pruebas de infraestructura. **No hay endpoints, modelos ni autenticación.** Hay una **propuesta** de modelo de datos simplificado (8 tablas, sin ejecutar y pendiente de validación) en `Nexora-Documentation/11-backend/database/`.
+> **Estado real (2026-11-19):** solo hay infraestructura. Existen la aplicación FastAPI vacía, la configuración, la conexión a PostgreSQL, Alembic sin migraciones y pruebas de infraestructura. **No hay endpoints, modelos ni autenticación.** El modelo de datos v0.6 (7 tablas) es **definitivo** y está en `Nexora-Documentation/11-backend/database/`; se va a implementar paso a paso.
+>
+> El nombre del proyecto es TaskIn (ADR-0012). Las bases `nexora_dev` y `nexora_test` y el rol `nexora` conservan su nombre: son del entorno local.
 
 ## Responsabilidad
 
@@ -35,6 +37,7 @@ Copia `.env.example` a `.env` y sustituye los marcadores. **Nunca subas `.env` n
 | `DATABASE_URL` | Sí | `postgresql+psycopg://USUARIO:CLAVE@host:puerto/base_de_desarrollo` |
 | `TEST_DATABASE_URL` | Solo para pruebas de integración | Debe apuntar exactamente a la base `nexora_test` y ser distinta de `DATABASE_URL` |
 | `FRONTEND_ORIGIN` | No (por defecto `http://localhost:3000`) | Origen del frontend; aún no se usa en CORS |
+| `DATABASE_DENYLIST` | No | Otras bases de tu equipo que TaskIn nunca debe usar, separadas por comas (por ejemplo, las de otros proyectos). `postgres` siempre está bloqueada. Si una URL apunta a una de ellas, la aplicación no arranca |
 
 Pendientes de decisión, aún sin definir: `SECRET_KEY`, correo electrónico, CORS/SameSite/CSRF.
 
@@ -66,7 +69,7 @@ Detalle en TESTING_BACKEND (`Nexora-Documentation/11-backend/TESTING_BACKEND.md`
 
 ## Migraciones
 
-Alembic está configurado (toma la URL de `DATABASE_URL`) pero `alembic/versions/` está vacío. No hay migraciones que aplicar y no deben crearse hasta tener el modelo de datos validado (DATABASE_DESIGN, `Nexora-Documentation/11-backend/DATABASE_DESIGN.md`).
+Alembic está configurado (toma la URL de `DATABASE_URL`) pero `alembic/versions/` aún está vacío. La primera migración se creará a partir del modelo definitivo (DATABASE_DESIGN, `Nexora-Documentation/11-backend/DATABASE_DESIGN.md`).
 
 ## Estructura del proyecto
 

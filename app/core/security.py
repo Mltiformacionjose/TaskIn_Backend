@@ -1,5 +1,5 @@
 """Utilidades de seguridad.
 
-Se completará en la épica E1 (sesiones en PostgreSQL y contraseñas
-Argon2id con pwdlib), según NEX-DOC-006 v0.2.
+Se completará con el acceso de usuarios (sesiones y contraseñas), cuando
+se decida ADR-0008. Ver SECURITY en la documentación del backend.
 """

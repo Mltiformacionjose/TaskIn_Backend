@@ -4,4 +4,4 @@ from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):
-    """Clase base para los futuros modelos ORM de Nexora."""
+    """Clase base para los futuros modelos ORM de TaskIn."""

@@ -1,1 +1,1 @@
-"""Paquete principal de la aplicación backend de Nexora."""
+"""Paquete principal de la aplicación backend de TaskIn."""

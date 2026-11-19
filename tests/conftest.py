@@ -17,8 +17,8 @@ def test_database_url() -> str:
     url = settings.test_database_url
     if not url:
         pytest.fail(
-            "TEST_DATABASE_URL no está configurada. Copia backend/.env.example "
-            "a backend/.env y apunta a nexora_test."
+            "TEST_DATABASE_URL no está configurada. Copia .env.example "
+            "a .env y apunta a nexora_test."
         )
     try:
         assert_safe_test_database(url, settings.database_url)

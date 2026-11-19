@@ -20,7 +20,7 @@ from app.db.session import create_database_engine, engine
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Verifica la conexión de Nexora con PostgreSQL mediante SELECT 1."
+        description="Verifica la conexión de TaskIn con PostgreSQL mediante SELECT 1."
     )
     parser.add_argument(
         "--test",

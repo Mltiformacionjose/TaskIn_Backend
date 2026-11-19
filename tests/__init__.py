@@ -1,1 +1,1 @@
-"""Pruebas del backend de Nexora."""
+"""Pruebas del backend de TaskIn."""
