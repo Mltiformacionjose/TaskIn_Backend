@@ -1,4 +1,7 @@
-"""Pruebas de la gestión de sesiones y de las protecciones de conexión."""
+"""Pruebas de las sesiones de base de datos (SQLAlchemy) y de las protecciones.
+
+No son las sesiones de usuario (inicio de sesión), que llegarán con ADR-0008.
+"""
 
 from typing import Any
 
@@ -117,6 +120,23 @@ def test_engine_refuses_reserved_databases() -> None:
             create_database_engine(
                 f"postgresql+psycopg://nexora@localhost:5432/{database}"
             )
+
+
+def test_engine_refuses_databases_of_the_local_denylist() -> None:
+    with pytest.raises(ValueError):
+        create_database_engine(
+            "postgresql+psycopg://nexora@localhost:5432/otra_base",
+            forbidden=frozenset({"otra_base"}),
+        )
+
+
+def test_guard_rejects_databases_of_the_local_denylist() -> None:
+    with pytest.raises(UnsafeDatabaseError):
+        assert_safe_test_database(
+            TEST_URL,
+            DEV_URL,
+            forbidden=frozenset({"nexora_test"}),
+        )
 
 
 def test_guard_accepts_nexora_test() -> None:

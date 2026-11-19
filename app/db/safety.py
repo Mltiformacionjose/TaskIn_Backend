@@ -3,7 +3,7 @@
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
 
-from app.core.config import FORBIDDEN_DATABASE_NAMES, TEST_DATABASE_NAME
+from app.core.config import TEST_DATABASE_NAME, settings
 
 
 class UnsafeDatabaseError(RuntimeError):
@@ -24,17 +24,20 @@ def database_name(database_url: str) -> str:
 def assert_safe_test_database(
     test_database_url: str,
     development_database_url: str,
+    forbidden: frozenset[str] | None = None,
 ) -> None:
     """Valida las protecciones obligatorias de la base de pruebas.
 
     - El nombre exacto debe ser ``nexora_test``.
-    - No puede ser una de las bases reservadas del entorno local.
+    - No puede ser una de las bases reservadas (fijas o de DATABASE_DENYLIST).
     - Debe ser distinta de la base de desarrollo.
     """
+    if forbidden is None:
+        forbidden = settings.forbidden_database_names
     test_name = database_name(test_database_url)
     development_name = database_name(development_database_url)
 
-    if test_name in FORBIDDEN_DATABASE_NAMES:
+    if test_name in forbidden:
         raise UnsafeDatabaseError(
             f"La base de pruebas '{test_name}' está reservada y no puede utilizarse."
         )

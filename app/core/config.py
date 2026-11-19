@@ -12,19 +12,19 @@ ENV_FILE = BACKEND_DIR / ".env"
 
 TEST_DATABASE_NAME = "nexora_test"
 
-FORBIDDEN_DATABASE_NAMES = frozenset(
-    {
-        "oido_cocina",
-        "oido_cocina_demo",
-        "oido_cocina_test",
-        "oido_cocina_verify",
-        "postgres",
-    }
-)
+# Bases que nunca se usan, en cualquier equipo. Cada desarrollador puede
+# bloquear otras bases de su entorno local con DATABASE_DENYLIST en .env
+# (nombres separados por comas), sin escribirlas en el código.
+FORBIDDEN_DATABASE_NAMES = frozenset({"postgres"})
+
+
+def parse_denylist(value: str) -> frozenset[str]:
+    """Convierte «base_a, base_b» en un conjunto de nombres sin espacios."""
+    return frozenset(name.strip() for name in value.split(",") if name.strip())
 
 
 class Settings(BaseSettings):
-    """Variables de entorno documentadas en NEX-DOC-006 v0.3."""
+    """Variables de entorno; los ejemplos están en .env.example."""
 
     model_config = SettingsConfigDict(
         env_file=ENV_FILE,
@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     database_url: str
     test_database_url: str | None = None
     frontend_origin: str = "http://localhost:3000"
+    database_denylist: str = ""
+
+    @property
+    def forbidden_database_names(self) -> frozenset[str]:
+        """Bases reservadas fijas más las de DATABASE_DENYLIST."""
+        return FORBIDDEN_DATABASE_NAMES | parse_denylist(self.database_denylist)
 
     @field_validator("database_url", "test_database_url")
     @classmethod
@@ -58,6 +64,17 @@ class Settings(BaseSettings):
                 "La base de datos indicada está reservada y no puede utilizarse."
             )
         return value
+
+    @model_validator(mode="after")
+    def _validate_denylist(self) -> "Settings":
+        """Rechaza las bases que el entorno local declara en DATABASE_DENYLIST."""
+        denied = parse_denylist(self.database_denylist)
+        for value in (self.database_url, self.test_database_url):
+            if value is not None and make_url(value).database in denied:
+                raise ValueError(
+                    "La base de datos indicada está reservada y no puede utilizarse."
+                )
+        return self
 
     @model_validator(mode="after")
     def _validate_test_database(self) -> "Settings":

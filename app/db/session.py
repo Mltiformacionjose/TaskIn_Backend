@@ -6,13 +6,17 @@ from typing import Any
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.config import FORBIDDEN_DATABASE_NAMES, settings
+from app.core.config import settings
 from app.db.safety import database_name
 
 DEFAULT_CONNECT_TIMEOUT_SECONDS = 5
 
 
-def create_database_engine(database_url: str, **kwargs: Any) -> Engine:
+def create_database_engine(
+    database_url: str,
+    forbidden: frozenset[str] | None = None,
+    **kwargs: Any,
+) -> Engine:
     """Crea un engine síncrono de SQLAlchemy para PostgreSQL.
 
     Se aplica un timeout de conexión por defecto para que un fallo de red
@@ -20,7 +24,9 @@ def create_database_engine(database_url: str, **kwargs: Any) -> Engine:
     mediante ``connect_args``. Las bases reservadas se rechazan también
     en este punto como defensa adicional.
     """
-    if database_name(database_url) in FORBIDDEN_DATABASE_NAMES:
+    if forbidden is None:
+        forbidden = settings.forbidden_database_names
+    if database_name(database_url) in forbidden:
         raise ValueError(
             "La base de datos indicada está reservada y no puede utilizarse."
         )

@@ -19,7 +19,12 @@ ENV_EXAMPLE = Path(__file__).resolve().parents[1] / ".env.example"
 
 @pytest.fixture(autouse=True)
 def clean_database_environment(monkeypatch: pytest.MonkeyPatch) -> None:
-    for variable in ("DATABASE_URL", "TEST_DATABASE_URL", "FRONTEND_ORIGIN"):
+    for variable in (
+        "DATABASE_URL",
+        "TEST_DATABASE_URL",
+        "FRONTEND_ORIGIN",
+        "DATABASE_DENYLIST",
+    ):
         monkeypatch.delenv(variable, raising=False)
 
 
@@ -109,6 +114,51 @@ def test_rejects_reserved_test_databases(
         )
 
 
+DENYLIST = "otra_base, otra_base_test ,"
+
+
+def test_denylist_is_empty_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    configured = build_settings(monkeypatch, DATABASE_URL=DEV_URL)
+
+    assert configured.forbidden_database_names == FORBIDDEN_DATABASE_NAMES
+
+
+def test_denylist_adds_local_databases(monkeypatch: pytest.MonkeyPatch) -> None:
+    configured = build_settings(
+        monkeypatch,
+        DATABASE_URL=DEV_URL,
+        DATABASE_DENYLIST=DENYLIST,
+    )
+
+    assert configured.forbidden_database_names == FORBIDDEN_DATABASE_NAMES | {
+        "otra_base",
+        "otra_base_test",
+    }
+
+
+@pytest.mark.parametrize("database", ["otra_base", "otra_base_test"])
+def test_rejects_denylisted_development_database(
+    monkeypatch: pytest.MonkeyPatch,
+    database: str,
+) -> None:
+    with pytest.raises(ValidationError):
+        build_settings(
+            monkeypatch,
+            DATABASE_URL=f"postgresql+psycopg://nexora@localhost:5432/{database}",
+            DATABASE_DENYLIST=DENYLIST,
+        )
+
+
+def test_rejects_denylisted_test_database(monkeypatch: pytest.MonkeyPatch) -> None:
+    with pytest.raises(ValidationError):
+        build_settings(
+            monkeypatch,
+            DATABASE_URL=DEV_URL,
+            TEST_DATABASE_URL=TEST_URL,
+            DATABASE_DENYLIST="nexora_test",
+        )
+
+
 def test_rejects_test_database_with_another_name(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -141,3 +191,4 @@ def test_env_example_documents_separate_databases_without_real_secrets() -> None
     assert "USER:PASSWORD" in values["DATABASE_URL"]
     assert "USER:PASSWORD" in values["TEST_DATABASE_URL"]
     assert "FRONTEND_ORIGIN" in values
+    assert values["DATABASE_DENYLIST"] == ""
